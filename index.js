@@ -1,9 +1,11 @@
+// IMPORTS
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const cors = require("cors");
 
+// MIDDLEWARES
 app.use(express.json());
-
 morgan.token("post-body", function (req, res) {
   return JSON.stringify(req.body);
 });
@@ -12,7 +14,10 @@ app.use(
     ":method :url :status :res[content-length] - :response-time ms :post-body"
   )
 );
+app.use(cors());
+app.use(express.static("dist"));
 
+// DATA
 let persons = [
   {
     id: 1,
@@ -95,6 +100,8 @@ app.post("/api/persons", (req, res) => {
   res.json(person);
 });
 
-const PORT = 3001;
-app.listen(PORT);
-console.log(`Server running on port ${PORT}`);
+// PORT
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
