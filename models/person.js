@@ -14,7 +14,10 @@ mongoose
     console.log("error conencting to MongoDB", error.message);
   });
 
-const personSchema = new mongoose.Schema({ name: String, number: Number });
+const personSchema = new mongoose.Schema({
+  name: { type: String, minLength: 3, required: true },
+  number: Number,
+});
 personSchema.set("toJSON", {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString();
