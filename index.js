@@ -84,23 +84,13 @@ const getRandomNumber = (min, max) => {
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
-  if (body.name === undefined || body.number === undefined) {
-    return res.status(400).json({ error: "missing fields" });
-  }
-
-  if (persons.find((person) => person.name === body.name)) {
-    return res
-      .status(400)
-      .json({ error: "person already exists in the phonebook" });
-  }
-
-  const person = {
-    id: getRandomNumber(1, 1000),
+  const person = Person({
     name: body.name,
     number: body.number,
-  };
-
-  persons = persons.concat(person);
+  });
+  person.save().then((result) => {
+    console.log(`added ${result.name} number ${result.number} to phonebook`);
+  });
   res.json(person);
 });
 
