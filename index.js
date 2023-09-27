@@ -43,47 +43,51 @@ let persons = [
   },
 ];
 
-app.get("/api/persons", (req, res) => {
-  Person.find({}).then((results) => {
-    res.json(results);
-  });
+app.get("/api/persons", (req, res, next) => {
+  Person.find({})
+    .then((results) => {
+      res.json(results);
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/info", (req, res) => {
-  const num_persons = persons.length;
+app.get("/info", (req, res, next) => {
   const date = new Date();
-  res.send(
-    `<p>Phonebook has information for ${num_persons} people.</p><p>${date.toString()}</p>`
-  );
+  Person.countDocuments({})
+    .then((result) => {
+      res.send(
+        `<p>Phonebook has information for ${result} people.</p><p>${date.toString()}</p>`
+      );
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
-
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+app.get("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Person.findById(id)
+    .then((result) => {
+      if (result) {
+        res.json(result);
+      } else {
+        res.status(404).end();
+      }
+    })
+    .catch((error) => next(error));
 });
 
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((person) => person.id !== id);
-
-  res.status(204).end();
+app.delete("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Person.findByIdAndRemove(id)
+    .then((result) => {
+      console.log("here");
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
-const getRandomNumber = (min, max) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min) + min);
-};
-
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
-  if (body.content === undefined) {
+  if (body.name === "" || body.number === "") {
     return res.status(400).json({ error: "content missing" });
   }
 
@@ -91,11 +95,47 @@ app.post("/api/persons", (req, res) => {
     name: body.name,
     number: body.number,
   });
-  person.save().then((result) => {
-    res.json(result);
-    console.log(`added ${result.name} number ${result.number} to phonebook`);
-  });
+
+  person
+    .save()
+    .then((result) => {
+      res.json(result);
+      console.log(`added ${result.name} number ${result.number} to phonebook`);
+    })
+    .catch((error) => next(error));
 });
+
+app.put("/api/persons/:id", (req, res, next) => {
+  const body = req.body;
+  const updatedPerson = {
+    id: body.id,
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(req.params.id, updatedPerson, { new: true })
+    .then((newNote) => {
+      res.json(newNote);
+    })
+    .catch((error) => next(error));
+});
+
+// ERROR HANDLING
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: "unknown endpoint" });
+};
+app.use(unknownEndpoint);
+
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message);
+  console.log("error name:", error.name);
+  if (error.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+app.use(errorHandler);
 
 // PORT
 const PORT = process.env.PORT;
