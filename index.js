@@ -1,8 +1,10 @@
 // IMPORTS
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+const Person = require("./models/person");
 
 // MIDDLEWARES
 app.use(express.json());
@@ -42,7 +44,9 @@ let persons = [
 ];
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then((results) => {
+    res.json(results);
+  });
 });
 
 app.get("/info", (req, res) => {
@@ -101,7 +105,7 @@ app.post("/api/persons", (req, res) => {
 });
 
 // PORT
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
