@@ -83,15 +83,18 @@ const getRandomNumber = (min, max) => {
 
 app.post("/api/persons", (req, res) => {
   const body = req.body;
+  if (body.content === undefined) {
+    return res.status(400).json({ error: "content missing" });
+  }
 
   const person = Person({
     name: body.name,
     number: body.number,
   });
   person.save().then((result) => {
+    res.json(result);
     console.log(`added ${result.name} number ${result.number} to phonebook`);
   });
-  res.json(person);
 });
 
 // PORT
